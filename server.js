@@ -12,10 +12,15 @@ NodeModules = {
       module = require(moduleName)
     } catch (e) {}
 
+    var resolvedPath = path.resolve('.');
+    if (resolvedPath == '/'){
+      resolvedPath = path.dirname(global.require.main.filename);
+    }
+
     // try public
     if (!module) {
       try {
-        var base = path.join(path.resolve('.'), 'public/node_modules')
+        var base = path.join(resolvedPath, 'public/node_modules')
         module = require(path.join(base, moduleName));
       } catch (e) {}
     }
@@ -23,7 +28,7 @@ NodeModules = {
     // try tests
     if (!module) {
       try {
-        var base = path.join(path.resolve('.'), 'tests/node_modules')
+        var base = path.join(resolvedPath, 'tests/node_modules')
         module = require(path.join(base, moduleName));
       } catch (e) {}
     }
@@ -45,6 +50,6 @@ NodeModules = {
     if (modulePath[0] === '/')
       NodeModules._path = modulePath;
     else
-      NodeModules._path = path.join(path.resolve('.'), modulePath);
+      NodeModules._path = path.join(resolvedPath, modulePath);
   }
 };
