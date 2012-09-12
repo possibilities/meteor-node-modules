@@ -1,5 +1,6 @@
 var require = __meteor_bootstrap__.require;
 var path = require("path");
+var fs = require("fs");
 
 NodeModules = {
   _path: null,
@@ -7,49 +8,57 @@ NodeModules = {
   require: function(moduleName) {
     var module;
     
+    // check specified spot
+    if (NodeModules._path)
+      try {
+        module = require(path.join(NodeModules._path, moduleName));
+      } catch (e) {}
+
     // try no path
-    try {
-      module = require(moduleName)
-    } catch (e) {}
+    if (!module)
+      try {
+        module = require(moduleName)
+      } catch (e) {}
 
-    var resolvedPath = path.resolve('.');
-    if (resolvedPath == '/'){
-      resolvedPath = path.dirname(global.require.main.filename);
-    }
+    var basePath = path.resolve('.');
+    if (basePath === '/')
+      basePath = path.dirname(global.require.main.filename);
 
-    // try public
     if (!module) {
-      try {
-        var base = path.join(resolvedPath, 'public/node_modules')
-        module = require(path.join(base, moduleName));
-      } catch (e) {}
-    }
+      var bundlePath = path.join(basePath, 'bundle');
+
+      if (fs.existsSync(bundlePath))
+        basePath = path.join(bundlePath);
+
+      var publicPath = path.join(basePath, 'public/node_modules');
+
+      if (fs.existsSync(publicPath))
+        basePath = publicPath;
+      else
+        basePath = path.join(basePath, 'static/node_modules');
     
-    // try tests
-    if (!module) {
-      try {
-        var base = path.join(resolvedPath, 'tests/node_modules')
-        module = require(path.join(base, moduleName));
-      } catch (e) {}
-    }
-    
-    if (!module && NodeModules._path) {
-      try {
-        var base = NodeModules._path;
-        module = require(path.join(base, moduleName));
-      } catch (e) {}
+      var modulePath = path.join(basePath, moduleName);
+
+      if (fs.existsSync(basePath)) {
+
+        // try public
+        if (fs.existsSync(modulePath))
+          try {
+            module = require(modulePath);
+          } catch (e) {}
+      }
     }
     
     return module;
   },
 
-  setPath: function(modulePath) {
-    if (modulePath.indexOf('~') >= -1)
-      modulePath.replace('~', process.env.HOME);
+  setPath: function(basePath) {
+    if (basePath.indexOf('~') >= -1)
+      basePath.replace('~', process.env.HOME);
 
-    if (modulePath[0] === '/')
-      NodeModules._path = modulePath;
+    if (basePath[0] === '/')
+      NodeModules._path = basePath;
     else
-      NodeModules._path = path.join(resolvedPath, modulePath);
+      NodeModules._path = path.join(resolvedPath, basePath);
   }
 };
