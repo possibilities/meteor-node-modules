@@ -20,6 +20,14 @@ NodeModules = {
       } catch (e) {}
     }
     
+    // try tests
+    if (!module) {
+      try {
+        var base = path.join(path.resolve('.'), 'tests/node_modules')
+        module = require(path.join(base, moduleName));
+      } catch (e) {}
+    }
+    
     if (!module && NodeModules._path) {
       try {
         var base = NodeModules._path;
