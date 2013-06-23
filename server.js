@@ -1,4 +1,4 @@
-var require = __meteor_bootstrap__.require;
+var require = (typeof(Npm) == "undefined") ? __meteor_bootstrap__.require("connect"): Npm.require;
 var path = require("path");
 var fs = require("fs");
 
